@@ -215,10 +215,11 @@ class Component extends DCLogic {
         ['ars', 'En pesos, con factura', 'Se suma IVA, que después desgravás'],
         ['usdt', 'En USDT', 'Solo comisión, sin IVA, se activa al instante'],
         ['ns', 'Todavía no sé', 'Lo vemos juntos en la llamada'] ] },
-      { key: 'decision', fase: 'ÚLTIMO PASO', title: 'Una última cosa antes de agendar', sub: '', context: true, opts: [
-        ['si', 'Sí, quiero activar el motor', 'Entiendo que un sistema profesional tiene un costo'],
-        ['costos', 'Quiero entender bien los costos primero', 'Todavía estoy evaluando'],
-        ['gratis', 'Busco algo gratuito o muy económico', 'No estoy en condiciones de invertir ahora'] ] }
+      { key: 'decision', fase: 'ÚLTIMO PASO', title: 'Si en la llamada vemos que el motor encaja con tu tienda, ¿qué hacés?', sub: 'Tomamos 5 tiendas por mes. Esta respuesta define tu lugar.', context: true, opts: [
+        ['ya', 'Arranco este mes', 'Tengo el presupuesto y quiero las campañas encendidas en 7 días'],
+        ['proximo', 'Arranco el mes que viene', 'Primero necesito ordenar caja o cerrar algo pendiente'],
+        ['socio', 'Lo decido con mi socio', 'Lo sumamos a la llamada para que lo escuche de primera mano'],
+        ['no', 'Solo quiero ver precios', 'Hoy no tengo pensado invertir en esto'] ] }
     ];
     const letters = ['A', 'B', 'C', 'D', 'E'];
     const isQuestion = !st.done && st.step <= 5;
@@ -242,7 +243,7 @@ class Component extends DCLogic {
     const next = () => {
       if (!sel) return;
       if (st.step < 5) { this.setState({ step: st.step + 1 }); return; }
-      const no = st.ans.ventas === 'lt30' || st.ans.ventas === '30' || st.ans.decision === 'gratis';
+      const no = st.ans.ventas === 'lt30' || st.ans.ventas === '30' || st.ans.decision === 'no';
       this.setState({ step: no ? 7 : 6 });
     };
     const back = () => {
