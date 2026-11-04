@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>METEX 360 — Precalificador Motor de Adquisición</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000}
+a{color:#b5ff00}a:hover{color:#d4ff66}
+@keyframes mx-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.mx-cal{display:grid;grid-template-columns:1fr}
+.mx-cal-mes,.mx-cal-horas{border-top:1px solid #1f1f1f}
+.mx-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(min-width:960px){.mx-cal{grid-template-columns:270px minmax(0,1fr) 190px}.mx-cal-mes,.mx-cal-horas{border-top:0;border-left:1px solid #1f1f1f}.mx-cal-horas{max-height:520px;overflow-y:auto}.mx-slots{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+<div id="mx-root"></div>
+<template id="mx-tpl">
+<div style="background-color: #000; background-image: radial-gradient(ellipse 60% 35% at 50% 0%, rgba(181,255,0,0.10), rgba(0,0,0,0) 70%), linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 100% 100%, 56px 56px, 56px 56px; color: #fefffc; font-family: 'Poppins', sans-serif; min-height: 100vh; display: flex; flex-direction: column">
+
+  <header style="border-bottom: 1px solid #1f1f1f">
+    <div style="max-width: 1120px; margin: 0 auto; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <img src="assets/logo-icon.png" alt="METEX 360" style="height: 26px; width: auto; display: block">
+        <span style="font-size: 16px; font-weight: 700">METEX 360°</span>
+      </div>
+      <div style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: {{accent}}; border: 1px solid rgba(181,255,0,0.45); background: rgba(181,255,0,0.06); padding: 8px 12px; border-radius: 4px">MOTOR DE ADQUISICIÓN</div>
+    </div>
+  </header>
+
+  <main style="flex: 1; width: 100%; max-width: {{mainMax}}; margin: 0 auto; padding: 40px 20px 64px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+
+    <!-- Progreso -->
+    <sc-if value="{{showProgress}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: #a3a3a3"><span>{{fase}}</span><span>{{progresoTxt}}</span></div>
+        <div style="height: 3px; background: #1f1f1f; border-radius: 2px; overflow: hidden"><div style="{{barStyle}}"></div></div>
+      </div>
+    </sc-if>
+
+    <!-- PREGUNTAS -->
+    <sc-if value="{{isQuestion}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 22px; animation: mx-up .35s ease both">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: #a3a3a3; display: flex; align-items: center; gap: 10px"><span style="width: 22px; height: 1px; background: {{accent}}; display: inline-block"></span>PASO {{pasoNum}} DE 6</div>
+          <h1 style="margin: 0; font-size: clamp(1.7rem, 4.6vw, 2.2rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">{{q.title}}</h1>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #a3a3a3">{{q.sub}}</p>
+        </div>
+
+        <sc-if value="{{q.hasContext}}" hint-placeholder-val="{{ false }}">
+          <div style="background: rgba(181,255,0,0.05); border: 1px solid #262626; border-left: 3px solid {{accent}}; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.6; color: #d4d4d4">
+            <b style="color: #fefffc">Antes de elegir, lo que cuesta:</b>
+            <div>· <b style="color: #fefffc">Nuestro trabajo: USD 400 por mes, fijo.</b> Incluye campañas, CRM con app y analítica con IA.</div>
+            <div>· <b style="color: #fefffc">Tu inversión en anuncios va aparte.</b> La cargás por nuestra cuenta publicitaria, con 17% de comisión (en pesos se suma IVA; en USDT no).</div>
+          </div>
+        </sc-if>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{q.opts}}" as="o" hint-placeholder-count="4">
+            <button type="button" onClick="{{o.pick}}" style="{{o.style}}">
+              <span style="{{o.badgeStyle}}">{{o.letter}}</span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 3px; text-align: left">
+                <span style="font-size: 15px; font-weight: 600; color: #fefffc">{{o.title}}</span>
+                <span style="font-size: 13px; color: #a3a3a3; line-height: 1.45">{{o.desc}}</span>
+              </span>
+              <span style="{{o.radioStyle}}"></span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 4px">
+          <button type="button" onClick="{{back}}" style="{{backStyle}}">← Atrás</button>
+          <button type="button" onClick="{{next}}" style="{{nextStyle}}">{{nextLabel}}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- CALENDARIO -->
+    <sc-if value="{{isCalendar}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 18px; animation: mx-up .35s ease both">
+        <div style="display: flex; gap: 10px; align-items: center; background: rgba(181,255,0,0.08); border: 1px solid rgba(181,255,0,0.5); border-radius: 10px; padding: 12px 14px; font-size: 14px"><b style="color: {{accent}}">✓</b> Tu tienda califica para el Motor de Adquisición.</div>
+
+        <div class="mx-cal" style="background: #0b0b0b; border: 1px solid #262626; border-radius: 16px; overflow: hidden">
+          <!-- Info -->
+          <div class="mx-cal-info" style="padding: 24px; display: flex; flex-direction: column; gap: 14px">
+            <div style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: {{accent}}">MOTOR DE ADQUISICIÓN</div>
+            <h1 style="margin: 0; font-size: 26px; line-height: 1.15; font-weight: 700; letter-spacing: -0.6px">Agendá tu llamada</h1>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #cccccc">
+              <div style="display: flex; gap: 10px; align-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b5ff00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><b>15 minutos</b></div>
+              <div style="display: flex; gap: 10px; align-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b5ff00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>Google Meet</div>
+              <div style="display: flex; gap: 10px; align-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b5ff00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>Hora Argentina (GMT-3)</div>
+              <sc-if value="{{hasDia}}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; gap: 10px; align-items: center; color: {{accent}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b5ff00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><b>{{seleccionTxt}}</b></div>
+              </sc-if>
+            </div>
+            <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #a3a3a3">En 15 minutos vemos cómo vende hoy tu tienda, cuánto invertís en anuncios y si el motor encaja. Si encaja, te mostramos cómo arrancar en 7 días.</p>
+          </div>
+
+          <!-- Calendario -->
+          <div class="mx-cal-mes" style="padding: 24px 16px; display: flex; flex-direction: column; gap: 14px">
+            <b style="font-size: 17px; padding: 0 8px">Elegí fecha y hora</b>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 14px">
+              <button type="button" onClick="{{prevMes}}" style="{{prevStyle}}" aria-label="Mes anterior">‹</button>
+              <b style="font-size: 15px; min-width: 140px; text-align: center">{{mesLabel}}</b>
+              <button type="button" onClick="{{nextMes}}" style="{{nextStyle}}" aria-label="Mes siguiente">›</button>
+            </div>
+            <div>
+              <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 6px">
+                <sc-for list="{{dowCab}}" as="w" hint-placeholder-count="7">
+                  <div style="text-align: center; font-size: 11px; font-weight: 600; color: #8a8a8a; padding: 4px 0">{{w}}</div>
+                </sc-for>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+                <sc-for list="{{celdas}}" as="c" hint-placeholder-count="35">
+                  <div style="display: flex; justify-content: center; padding: 2px 0">
+                    <button type="button" onClick="{{c.pick}}" style="{{c.style}}">{{c.num}}</button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="font-size: 12px; color: #8a8a8a; text-align: center">Lunes a viernes · de 12 a 18 hs</div>
+          </div>
+
+          <!-- Horarios -->
+          <div class="mx-cal-horas" style="padding: 24px 16px; display: flex; flex-direction: column; gap: 10px">
+            <div style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: #a3a3a3; text-transform: uppercase">{{horasTitulo}}</div>
+            <sc-if value="{{sinDia}}" hint-placeholder-val="{{ true }}">
+              <div style="font-size: 14px; color: #6f6f6f; line-height: 1.6">Elegí un día del calendario para ver los horarios.</div>
+            </sc-if>
+            <sc-if value="{{cargandoHoras}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 14px; color: #a3a3a3">Buscando lugares…</div>
+            </sc-if>
+            <sc-if value="{{sinLugares}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 14px; color: #a3a3a3; line-height: 1.6">No quedan lugares este día. Probá con otro.</div>
+            </sc-if>
+            <div class="mx-slots">
+              <sc-for list="{{horasLibres}}" as="h" hint-placeholder-count="6">
+                <button type="button" onClick="{{h.pick}}" style="{{h.style}}">{{h.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{hasHora}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #0b0b0b; border: 1px solid #262626; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px; animation: mx-up .3s ease both; max-width: 560px; width: 100%; box-sizing: border-box; align-self: center">
+            <div style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: #a3a3a3">TUS DATOS · <span style="color: {{accent}}">{{seleccionTxt}}</span></div>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Nombre y tienda
+              <input type="text" value="{{nombre}}" onChange="{{setNombre}}" placeholder="Ej: Lucas — iShop" style="font-family: inherit; font-size: 16px; padding: 13px 14px; border-radius: 8px; border: 1px solid #333; background: #141414; color: #fefffc; min-height: 48px; box-sizing: border-box">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">WhatsApp
+              <input type="tel" value="{{waNum}}" onChange="{{setWaNum}}" placeholder="+54 9 11 1234 5678" style="font-family: inherit; font-size: 16px; padding: 13px 14px; border-radius: 8px; border: 1px solid #333; background: #141414; color: #fefffc; min-height: 48px; box-sizing: border-box">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Email (te mandamos la invitación de Google Meet)
+              <input type="email" value="{{email}}" onChange="{{setEmail}}" placeholder="tu@email.com" style="font-family: inherit; font-size: 16px; padding: 13px 14px; border-radius: 8px; border: 1px solid #333; background: #141414; color: #fefffc; min-height: 48px; box-sizing: border-box">
+            </label>
+            <div style="font-size: 13px; color: #ff8a65; min-height: 18px">{{err}}</div>
+            <button type="button" onClick="{{confirmar}}" style="cursor: pointer; font-family: inherit; background: {{accent}}; color: #000; font-size: 16px; font-weight: 600; padding: 16px 20px; border-radius: 4px; border: 0; min-height: 52px">{{btnTxt}}</button>
+          </div>
+        </sc-if>
+
+        <button type="button" onClick="{{back}}" style="align-self: flex-start; cursor: pointer; font-family: inherit; background: transparent; border: 1px solid #333; color: #cccccc; font-size: 14px; padding: 12px 18px; border-radius: 4px; min-height: 44px">← Atrás</button>
+      </div>
+    </sc-if>
+
+    
+<!-- CONFIRMADO -->
+    <sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 18px; animation: mx-up .35s ease both; padding-top: 24px">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: {{accent}}; color: #000; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700">✓</div>
+        <h1 style="margin: 0; font-size: clamp(1.8rem, 4.8vw, 2.4rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Listo, {{nombreCorto}}. <span style="color: {{accent}}">Tu reunión está agendada.</span></h1>
+        <div style="background: #0b0b0b; border: 1px solid #262626; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+          <div style="display: flex; justify-content: space-between; gap: 10px"><span style="color: #a3a3a3">Día</span><b>{{diaLargo}}</b></div>
+          <div style="display: flex; justify-content: space-between; gap: 10px"><span style="color: #a3a3a3">Hora</span><b>{{hora}} (GMT-3)</b></div>
+          <div style="display: flex; justify-content: space-between; gap: 10px"><span style="color: #a3a3a3">Dónde</span><b>Google Meet</b></div>
+          <div style="display: flex; justify-content: space-between; gap: 10px"><span style="color: #a3a3a3">Invitación a</span><b>{{email}}</b></div>
+        </div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #a3a3a3">Te llega la invitación con el link de Meet a tu email. Antes de la llamada te escribimos por WhatsApp para confirmar.</p>
+        <a href="https://www.instagram.com/metex.ok/" style="align-self: flex-start; color: #fefffc; text-decoration: none; font-size: 14px; font-weight: 600; border: 1px solid #333; padding: 12px 18px; border-radius: 4px">Mientras tanto, seguinos en @metex.ok</a>
+      </div>
+    </sc-if>
+
+    <!-- NO CALIFICA -->
+    <sc-if value="{{isNo}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 16px; animation: mx-up .35s ease both; padding-top: 24px">
+        <h1 style="margin: 0; font-size: clamp(1.7rem, 4.6vw, 2.2rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Gracias por tu tiempo. Por ahora el motor no es para tu tienda.</h1>
+        <p style="margin: 0; font-size: 15px; line-height: 1.7; color: #b5b5b5">El motor funciona cuando la tienda ya tiene volumen o puede sostener una inversión en anuncios todos los meses. Si querés, escribinos por WhatsApp y te avisamos cuando tengamos una opción para tu tienda.</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <a href="https://wa.me/5491135836511?text=Hola%2C%20complet%C3%A9%20el%20precalificador%20del%20Motor%20de%20Adquisici%C3%B3n.%20Avisenme%20cuando%20tengan%20una%20opci%C3%B3n%20para%20mi%20tienda." style="background: {{accent}}; color: #000; text-decoration: none; font-size: 15px; font-weight: 600; padding: 14px 20px; border-radius: 4px">Escribinos por WhatsApp</a>
+          <a href="https://www.instagram.com/metex.ok/" style="background: transparent; border: 1px solid #333; color: #cccccc; text-decoration: none; font-size: 14px; padding: 12px 18px; border-radius: 4px">Seguir a @metex.ok</a>
+          <button type="button" onClick="{{back}}" style="cursor: pointer; font-family: inherit; background: transparent; border: 1px solid #333; color: #cccccc; font-size: 14px; padding: 12px 18px; border-radius: 4px; min-height: 44px">← Revisar respuestas</button>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+
+  <footer style="border-top: 1px solid #1f1f1f">
+    <div style="max-width: 1120px; margin: 0 auto; padding: 18px 20px; text-align: center; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1px; color: #6f6f6f">
+      <a href="../" style="color: #8a8a8a">← VOLVER AL INICIO</a> · © 2026 METEX 360 · MOTOR DE ADQUISICIÓN PARA TIENDAS IPHONE
+    </div>
+  </footer>
+</div>
+</template>
+<script src="assets/morphdom.min.js"></script>
+<script src="assets/mx-runtime.js"></script>
+<script>
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 0, ans: {}, dia: '', hora: '', nombre: '', waNum: '', email: '', err: '', done: false, ocupados: {}, enviando: false, mesOff: 0 };
+  }
+  cargarDisponibilidad(fecha) {
+    const url = this.props.disponibilidad || '';
+    if (!url || !fecha) return;
+    fetch(url + (url.indexOf('?') === -1 ? '?' : '&') + 'fecha=' + encodeURIComponent(fecha))
+      .then((r) => r.json())
+      .then((d) => this.setState({ ocupados: Object.assign({}, this.state.ocupados, { [fecha]: Array.isArray(d && d.ocupados) ? d.ocupados : [] }) }))
+      .catch(() => this.setState({ ocupados: Object.assign({}, this.state.ocupados, { [fecha]: [] }) }));
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#b5ff00';
+    const st = this.state;
+    const Q = [
+      { key: 'rubro', fase: 'TU TIENDA', title: '¿iPhone es tu línea principal?', sub: 'El motor está armado para tiendas que venden iPhone.', opts: [
+        ['iphone', 'Sí, iPhone es nuestro producto principal', 'La mayor parte de las ventas son iPhones'],
+        ['apple', 'Vendemos productos Apple en general', 'iPhone, MacBook, AirPods, accesorios'],
+        ['mix', 'Es una línea importante, con otras marcas', 'Apple es una parte fuerte del negocio'],
+        ['start', 'Estamos arrancando con iPhone', 'Todavía consolidando volumen'] ] },
+      { key: 'ventas', fase: 'TU TIENDA', title: '¿Cuántos equipos vendés por mes?', sub: 'El volumen define si el motor te genera retorno real.', opts: [
+        ['lt30', 'Menos de 30 equipos', 'Estamos en etapa de crecimiento'],
+        ['30', 'Entre 30 y 60 equipos', 'Vendemos de forma constante'],
+        ['60', 'Entre 60 y 100 equipos', 'Volumen ideal: el motor se paga rápido'],
+        ['100', 'Más de 100 equipos', 'Alto volumen: cada peso mal invertido pesa'] ] },
+      { key: 'pauta', fase: 'TU PAUTA', title: '¿Cuánto invertís por mes en anuncios de Meta?', sub: 'No hace falta tener pauta activa: si no invertís, la armamos desde cero.', opts: [
+        ['0', 'No invierto todavía', 'Queremos empezar con anuncios'],
+        ['lt500', 'Menos de USD 500/mes', 'Invertimos de a poco'],
+        ['500', 'Entre USD 500 y 1.500/mes', 'Invertimos de forma consistente'],
+        ['1500', 'Más de USD 1.500/mes', 'La publicidad es un pilar del negocio'] ] },
+      { key: 'dolor', fase: 'TU PAUTA', title: '¿Qué te pasa más seguido?', sub: 'Así sabemos qué mirar primero en la llamada.', opts: [
+        ['corte', 'Se me bloquea o se corta la pauta', 'Falla la tarjeta y frena la campaña'],
+        ['ciegas', 'No sé qué anuncio me vende', 'Invierto sin saber qué me vuelve'],
+        ['chats', 'Los chats se pierden', 'Consultas repartidas en celulares, sin seguimiento'],
+        ['todas', 'Las tres — me pasan todas', 'El motor completo está pensado para esto'] ] },
+      { key: 'moneda', fase: 'TU PAUTA', title: '¿Cómo preferís cargar la pauta?', sub: 'La cargás por nuestra cuenta publicitaria, así nunca se corta.', opts: [
+        ['ars', 'En pesos, con factura', 'Se suma IVA, que después desgravás'],
+        ['usdt', 'En USDT', 'Solo comisión, sin IVA, se activa al instante'],
+        ['ns', 'Todavía no sé', 'Lo vemos juntos en la llamada'] ] },
+      { key: 'decision', fase: 'ÚLTIMO PASO', title: 'Si la llamada confirma que el motor encaja con tu tienda, ¿cuándo arrancás?', sub: 'Tomamos 5 tiendas por mes. Con esto sabemos cómo reservarte el lugar.', context: true, opts: [
+        ['ya', 'Arranco este mes', 'Tengo el presupuesto y quiero las campañas encendidas en 7 días'],
+        ['proximo', 'Arranco el mes que viene', 'Primero necesito ordenar caja o cerrar algo pendiente'],
+        ['socio', 'Lo decido con mi socio', 'Lo sumamos a la llamada para que lo escuche de primera mano'],
+        ['no', 'Solo estaba averiguando precios', 'Hoy no voy a invertir en esto'] ] }
+    ];
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+    const isQuestion = !st.done && st.step <= 5;
+    const isCalendar = !st.done && st.step === 6;
+    const isNo = !st.done && st.step === 7;
+    const qd = Q[Math.min(st.step, 5)];
+    const sel = st.ans[qd.key];
+    const q = {
+      title: qd.title, sub: qd.sub, hasContext: !!qd.context,
+      opts: qd.opts.map((o, i) => {
+        const on = sel === o[0];
+        return {
+          letter: letters[i], title: o[1], desc: o[2],
+          pick: () => this.setState({ ans: Object.assign({}, st.ans, { [qd.key]: o[0] }) }),
+          style: 'width: 100%; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 12px; text-align: left; transition: all .15s; ' + (on ? 'background: rgba(181,255,0,0.07); border: 1px solid ' + accent : 'background: #0b0b0b; border: 1px solid #262626'),
+          badgeStyle: 'flex: none; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: Space Mono, monospace; font-size: 13px; font-weight: 700; ' + (on ? 'background: ' + accent + '; color: #000' : 'background: #161616; color: #a3a3a3; border: 1px solid #2a2a2a'),
+          radioStyle: 'flex: none; width: 18px; height: 18px; border-radius: 50%; box-sizing: border-box; ' + (on ? 'background: ' + accent + '; border: 5px solid #0b0b0b; box-shadow: 0 0 0 1px ' + accent : 'border: 1px solid #555')
+        };
+      })
+    };
+    const next = () => {
+      if (!sel) return;
+      if (st.step < 5) { this.setState({ step: st.step + 1 }); return; }
+      const vendeBien = st.ans.ventas === '60' || st.ans.ventas === '100'; const invierteBien = st.ans.pauta === '500' || st.ans.pauta === '1500'; const no = st.ans.decision === 'no' || !(vendeBien || invierteBien);
+      this.setState({ step: no ? 7 : 6 });
+    };
+    const back = () => {
+      if (st.step === 7) { this.setState({ step: 5 }); return; }
+      if (st.step > 0) this.setState({ step: st.step - 1, err: '' });
+    };
+    // Calendario mensual (Dom–Sáb): reservable hoy + 21 días, lunes a viernes
+    const dows = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+    const dowsLargo = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const mesesLargo = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const pad = (n) => (n < 10 ? '0' : '') + n;
+    const idDe = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    const d0 = new Date(); d0.setHours(0, 0, 0, 0);
+    const dMax = new Date(d0.getTime() + 21 * 86400000);
+    const reservable = (d) => d >= d0 && d <= dMax && d.getDay() !== 0 && d.getDay() !== 6;
+    const mesBase = new Date(d0.getFullYear(), d0.getMonth() + (st.mesOff || 0), 1);
+    const mesLabel = mesesLargo[mesBase.getMonth()].charAt(0).toUpperCase() + mesesLargo[mesBase.getMonth()].slice(1) + ' ' + mesBase.getFullYear();
+    const hayPrev = (st.mesOff || 0) > 0;
+    const hayNext = new Date(mesBase.getFullYear(), mesBase.getMonth() + 1, 1) <= dMax;
+    const navStyle = (on) => 'font-family: inherit; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; ' + (on ? 'cursor: pointer; background: rgba(181,255,0,0.12); color: ' + accent + '; border: 1px solid rgba(181,255,0,0.4)' : 'cursor: default; background: transparent; color: #333; border: 1px solid #1f1f1f');
+    const dowCab = ['Dom.', 'Lun.', 'Mar.', 'Mié.', 'Jue.', 'Vie.', 'Sáb.'];
+    const celdas = [];
+    for (let i = 0; i < mesBase.getDay(); i++) celdas.push({ num: '', pick: () => {}, style: 'visibility: hidden; width: 38px; height: 38px' });
+    const ultimo = new Date(mesBase.getFullYear(), mesBase.getMonth() + 1, 0).getDate();
+    for (let n = 1; n <= ultimo; n++) {
+      const d = new Date(mesBase.getFullYear(), mesBase.getMonth(), n);
+      const id = idDe(d);
+      const ok = reservable(d);
+      const on = st.dia === id;
+      celdas.push({
+        num: n,
+        pick: () => { if (!ok) return; this.setState({ dia: id, hora: '' }); this.cargarDisponibilidad(id); },
+        style: 'font-family: inherit; width: 38px; height: 38px; border-radius: 50%; font-size: 14px; display: flex; align-items: center; justify-content: center; padding: 0; ' + (on ? 'cursor: pointer; background: ' + accent + '; color: #000; font-weight: 700; border: 1px solid ' + accent : ok ? 'cursor: pointer; background: rgba(181,255,0,0.12); color: ' + accent + '; font-weight: 700; border: 1px solid rgba(181,255,0,0.25)' : 'cursor: default; background: transparent; color: #444; font-weight: 400; border: 1px solid transparent')
+      });
+    }
+    const prevMes = () => { if (hayPrev) this.setState({ mesOff: (st.mesOff || 0) - 1 }); };
+    const nextMes = () => { if (hayNext) this.setState({ mesOff: (st.mesOff || 0) + 1 }); };
+    const dias = [];
+    const selDia = st.dia ? new Date(st.dia + 'T12:00:00') : null;
+    const diaLargo = selDia ? dowsLargo[selDia.getDay()] + ' ' + selDia.getDate() + ' de ' + mesesLargo[selDia.getMonth()] : '';
+    const slots = ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
+    const ocupDia = st.ocupados[st.dia];
+    const cargando = !!st.dia && !!this.props.disponibilidad && ocupDia === undefined;
+    const horas = slots.map((h) => {
+      const tomado = cargando || (Array.isArray(ocupDia) && ocupDia.indexOf(h) !== -1);
+      return {
+        label: tomado && !cargando ? h + ' ✕' : h,
+        pick: () => { if (!tomado) this.setState({ hora: h }); },
+        style: 'font-family: inherit; font-size: 14px; font-weight: 600; padding: 12px 4px; border-radius: 8px; min-height: 44px; ' + (tomado ? 'cursor: not-allowed; background: #080808; color: #3d3d3d; border: 1px solid #1a1a1a; text-decoration: ' + (cargando ? 'none' : 'line-through') : 'cursor: pointer; ' + (st.hora === h ? 'background: ' + accent + '; color: #000; border: 1px solid ' + accent : 'background: #0b0b0b; color: #fefffc; border: 1px solid #262626'))
+      };
+    });
+    const horasLibres = cargando ? [] : horas.filter((h) => h.label.indexOf('✕') === -1).map((h) => ({ label: h.label, pick: h.pick, style: h.style + '; width: 100%; padding: 14px 4px; font-size: 15px; ' + (st.hora === h.label ? '' : 'background: transparent; color: ' + accent + '; border: 1px solid rgba(181,255,0,0.45)') }));
+    const seleccionTxt = selDia ? dowsLargo[selDia.getDay()].charAt(0).toUpperCase() + dowsLargo[selDia.getDay()].slice(1) + ' ' + selDia.getDate() + ' de ' + mesesLargo[selDia.getMonth()] + (st.hora ? ' · ' + st.hora + ' hs' : '') : '';
+    const confirmar = () => {
+      if (!st.nombre.trim()) { this.setState({ err: 'Completá tu nombre.' }); return; }
+      if (st.waNum.replace(/\D/g, '').length < 8) { this.setState({ err: 'Completá un WhatsApp válido.' }); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(st.email.trim())) { this.setState({ err: 'Completá un email válido para la invitación.' }); return; }
+      if (st.enviando) return;
+      const hook = this.props.webhook || '';
+      if (!hook) { this.setState({ done: true, err: '' }); return; }
+      this.setState({ enviando: true, err: '' });
+      fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oferta: 'motor_adquisicion', respuestas: st.ans, fecha: st.dia, hora: st.hora, zona: 'America/Argentina/Buenos_Aires', nombre: st.nombre, whatsapp: st.waNum, email: st.email }) })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d && d.ok) { this.setState({ done: true, enviando: false, err: '' }); return; }
+          const oc = Object.assign({}, this.state.ocupados); delete oc[st.dia];
+          this.setState({ enviando: false, hora: '', ocupados: oc, err: 'No pudimos reservar ese horario. Elegí otro, por favor.' });
+          this.cargarDisponibilidad(st.dia);
+        })
+        .catch(() => this.setState({ enviando: false, err: 'Hubo un problema de conexión. Probá de nuevo en unos segundos.' }));
+    };
+    const fases = st.step <= 5 ? qd.fase : 'AGENDA';
+    const pct = st.done ? 100 : Math.round((Math.min(st.step, 6) + (st.step <= 5 && sel ? 1 : 0)) / 7 * 100);
+    return {
+      accent: accent,
+      showProgress: !st.done && st.step !== 7,
+      fase: fases,
+      progresoTxt: st.step <= 5 ? (st.step + 1) + ' / 6' : 'AGENDA',
+      barStyle: 'height: 100%; width: ' + pct + '%; background: ' + accent + '; transition: width .3s',
+      isQuestion: isQuestion, isCalendar: isCalendar, isNo: isNo, isDone: st.done,
+      pasoNum: Math.min(st.step, 5) + 1,
+      q: q,
+      next: next, back: back,
+      nextLabel: st.step === 5 ? 'Ver horarios →' : 'Continuar →',
+      nextStyle: 'cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 600; padding: 14px 22px; border-radius: 4px; border: 0; min-height: 48px; ' + (sel ? 'background: ' + accent + '; color: #000' : 'background: #2a3a10; color: #6f7f50; cursor: not-allowed'),
+      backStyle: 'cursor: pointer; font-family: inherit; font-size: 14px; padding: 12px 18px; border-radius: 4px; min-height: 48px; background: transparent; border: 1px solid #333; color: #cccccc; ' + (st.step === 0 ? 'visibility: hidden' : ''),
+      dias: dias, celdas: celdas, dowCab: dowCab, mesLabel: mesLabel, prevMes: prevMes, nextMes: nextMes, prevStyle: navStyle(hayPrev), nextStyle: navStyle(hayNext), hasDia: !!st.dia, sinDia: !st.dia, horas: horas, horasLibres: horasLibres, sinLugares: !!st.dia && !cargando && horasLibres.length === 0, horasTitulo: selDia ? dowsLargo[selDia.getDay()] + ' ' + selDia.getDate() : 'Horarios', seleccionTxt: seleccionTxt, mainMax: isCalendar ? '1080px' : '560px', hasHora: !!st.hora, diaLargo: diaLargo, hora: st.hora,
+      nombre: st.nombre, waNum: st.waNum, email: st.email, err: st.err,
+      setNombre: (e) => this.setState({ nombre: e.target.value, err: '' }),
+      setWaNum: (e) => this.setState({ waNum: e.target.value, err: '' }),
+      setEmail: (e) => this.setState({ email: e.target.value, err: '' }),
+      confirmar: confirmar, btnTxt: st.enviando ? 'Agendando…' : 'Agendar reunión →', cargandoHoras: cargando,
+      nombreCorto: (st.nombre.trim().split(/[\s—-]+/)[0] || '')
+    };
+  }
+}
+
+MX.mount(Component, {"accent": "#b5ff00", "webhook": "https://metex360-n8n.9pvbrl.easypanel.host/webhook/motor-agenda", "disponibilidad": "https://metex360-n8n.9pvbrl.easypanel.host/webhook/motor-disponibilidad"});
+</script>
+</body>
+</html>
